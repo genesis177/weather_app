@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather App (Spring Boot + Thymeleaf + LangChain4j)</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #0b1020;
+            --panel: #141a2f;
+            --text: #e6e9f0;
+            --muted: #9aa3b2;
+            --primary: #4f8cff;
+            --primary-contrast: #ffffff;
+            --border: #23304d;
+            --focus: #a3c5ff;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f7f9fc;
+                --panel: #ffffff;
+                --text: #172033;
+                --muted: #51607a;
+                --primary: #0d6efd;
+                --primary-contrast: #ffffff;
+                --border: #e5eaf2;
+                --focus: #5aa1ff;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+          margin: 0;
+          background: radial-gradient(1200px 800px at 100% 0%, rgba(79, 140, 255, 0.12), transparent 60%),
+          radial-gradient(1000px 700px at 0% 100%, rgba(71, 182, 255, 0.12), transparent 60%),
+          var(--bg);
+          color: var(--text);
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+      }
+
+        .wrap {
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10vh 1rem 6vh;
+      }
+
+      .card {
+          border: 1px solid var(--border);
+          border-radius: 16px;
+        padding: 1.25rem;
+          width: 100%;
+        max-width: 720px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)), var(--panel);
+          backdrop-filter: blur(6px);
+      }
+
+        h1 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.5rem;
+            letter-spacing: .2px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+      input[type="text"] {
+          padding: 0.9rem 0.9rem;
+        font-size: 1rem;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          background: color-mix(in oklab, var(--panel), #ffffff 3%);
+          color: var(--text);
+          outline: none;
+      }
+
+        input[type="text"]:focus {
+            border-color: var(--focus);
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--focus), transparent 80%);
+        }
+
+        .row-inline {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+      button {
+          padding: 0.9rem 1rem;
+        font-size: 1rem;
+          border: 1px solid var(--primary);
+          background: var(--primary);
+          color: var(--primary-contrast);
+          border-radius: 12px;
+        cursor: pointer;
+          min-height: 44px;
+      }
+
+        button.secondary {
+            background: transparent;
+            color: var(--primary);
+            border-color: var(--border);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: .9rem;
+            color: var(--muted);
+        }
+
+      @media (max-width: 600px) {
+          .wrap {
+              padding: 6vh 0.75rem;
+          }
+
+          h1 {
+              font-size: 1.25rem;
+          }
+
+          .row-inline {
+              flex-wrap: wrap;
+          }
+
+          .row-inline > * {
+              flex: 1 1 100%;
+          }
+
+          button {
+              width: 100%;
+          }
+      }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1 th:text="${message}">Welcome to Weather App!</h1>
+        <p class="muted">Find your location to view a rich, mobile-friendly weather report.</p>
+        <form id="location-form" class="form-row" method="get" action="/report" novalidate>
+            <label for="city-input">Your town or city</label>
+            <div class="row-inline">
+                <input id="city-input" name="city" type="text" list="city-suggestions"
+                       placeholder="Start typing your town..."
+                       autocomplete="off"/>
+                <button type="button" id="geo-btn" title="Use my location">Use my location</button>
+                <button type="button" class="secondary" id="reset-btn" style="display:none;">Reset</button>
+            </div>
+            <input type="hidden" id="lat" name="lat"/>
+            <input type="hidden" id="lon" name="lon"/>
+            <datalist id="city-suggestions"></datalist>
+            <div class="hint">Type at least 4 characters or pick from suggestions like
+                "City CC (lat,lon)". You can also use your current location.
+            </div>
+            <button id="submit-btn" type="submit" disabled>View report</button>
+        </form>
+        <footer>
+            Powered by Spring Boot & Leaflet · AI summaries via Gemini when configured
+        </footer>
+    </div>
+</div>
+
+<script>
+    (function () {
+      const input = document.getElementById('city-input');
+      const datalist = document.getElementById('city-suggestions');
+      const form = document.getElementById('location-form');
+      const geoBtn = document.getElementById('geo-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const latEl = document.getElementById('lat');
+      const lonEl = document.getElementById('lon');
+      const submitBtn = document.getElementById('submit-btn');
+
+      // Validate before submission: ensure we have parsed coordinates
+      form.addEventListener('submit', function (e) {
+        const lat = document.getElementById('lat').value;
+        const lon = document.getElementById('lon').value;
+        if (!lat || !lon) {
+          e.preventDefault();
+          alert('Please select a location from suggestions to include coordinates.');
+          return;
+        }
+        // Modify city input to only send first word up to first comma
+        const input = document.getElementById('city-input');
+        const cityVal = input.value || '';
+        // Extract up to first comma, or first word if no comma
+        let cityFirstWord = cityVal.split(',')[0].trim().split(/\s+/)[0];
+        input.value = cityFirstWord;
+        // Ensure city input is enabled so it is included in the form submission
+        input.disabled = false;
+      });
+
+      let timer = null;
+      const debounce = (fn, delay = 250) => {
+        return (...args) => {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(null, args), delay);
+        };
+      };
+
+      function shouldSearch(text) {
+        const t = (text || '').trim();
+        if (!t) return false;
+        const chars = t.length;
+        const words = t.split(/\s+/).filter(Boolean).length;
+        // The issue text says "more than 3 words"; we also allow >3 characters to be user-friendly
+        return words > 3 || chars > 3;
+      }
+
+      async function fetchSuggestions(q) {
+        try {
+          const resp = await fetch(`/api/cities/search?q=${encodeURIComponent(q)}&limit=10`);
+          if (!resp.ok) return [];
+          return await resp.json();
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function setSuggestions(list) {
+        datalist.innerHTML = '';
+        (list || []).forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item; // using formatted suggestion string as the value
+          datalist.appendChild(opt);
+        });
+      }
+
+      const handleInput = debounce(async function (e) {
+        const q = e.target.value || '';
+        if (!shouldSearch(q)) {
+          setSuggestions([]);
+          return;
+        }
+        const suggestions = await fetchSuggestions(q);
+        setSuggestions(suggestions);
+      }, 250);
+
+      function parseCoordsFromInput(val) {
+        // Match last pair of parentheses with two numbers: (lat,lon)
+        const m = (val || '').match(/\(([-+]?\d*\.?\d+),\s*([-+]?\d*\.?\d+)\)\s*$/);
+        if (!m) return null;
+        const lat = parseFloat(m[1]);
+        const lon = parseFloat(m[2]);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) return { lat, lon };
+        return null;
+      }
+
+      function updateStateFromInput() {
+        const val = input.value || '';
+        const coords = parseCoordsFromInput(val);
+        const submitBtn = document.getElementById('submit-btn');
+        const latEl = document.getElementById('lat');
+        const lonEl = document.getElementById('lon');
+        if (coords) {
+          latEl.value = coords.lat;
+          lonEl.value = coords.lon;
+          submitBtn.disabled = false;
+        } else {
+          latEl.value = '';
+          lonEl.value = '';
+          submitBtn.disabled = true;
+        }
+      }
+
+      geoBtn.addEventListener('click', function () {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your browser.');
+          return;
+        }
+        geoBtn.disabled = true;
+        geoBtn.textContent = 'Locating...';
+        navigator.geolocation.getCurrentPosition(
+          async function (pos) {
+            const { latitude, longitude } = pos.coords;
+            latEl.value = latitude;
+            lonEl.value = longitude;
+            // Reverse geocode using Nominatim
+            let cityLabel = '';
+            try {
+              const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`;
+              const resp = await fetch(url, {
+                headers: { 'User-Agent': 'weather-app-demo' }
+              });
+              if (resp.ok) {
+                const data = await resp.json();
+                // Try to get city/town/village/hamlet
+                const addr = data.address || {};
+                cityLabel = addr.city || addr.town || addr.village || addr.hamlet || '';
+                const countryCode = addr.country_code ? addr.country_code.toUpperCase() : '';
+                if (cityLabel && countryCode) {
+                  cityLabel = `${cityLabel} ${countryCode}`;
+                }
+              }
+            } catch (e) {
+              // ignore, fallback below
+            }
+            if (!cityLabel) {
+              cityLabel = `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+            } else {
+              cityLabel = `${cityLabel} (${latitude.toFixed(5)},${longitude.toFixed(5)})`;
+            }
+            input.value = cityLabel;
+            // Do not disable input here, so its value is sent with the form
+            // input.disabled = true;
+            datalist.innerHTML = '';
+            submitBtn.disabled = false;
+            geoBtn.style.display = 'none';
+            resetBtn.style.display = '';
+            geoBtn.textContent = 'Use my location';
+          },
+          function (err) {
+            alert('Unable to retrieve your location.');
+            geoBtn.disabled = false;
+            geoBtn.textContent = 'Use my location';
+          }
+        );
+      });
+
+      resetBtn.addEventListener('click', function () {
+        input.value = '';
+        input.disabled = false;
+        latEl.value = '';
+        lonEl.value = '';
+        submitBtn.disabled = true;
+        geoBtn.style.display = '';
+        resetBtn.style.display = 'none';
+        datalist.innerHTML = '';
+      });
+
+      input.addEventListener('input', (e) => {
+        handleInput(e);
+        updateStateFromInput();
+      });
+
+      // Also run on blur in case selection happens via click on datalist
+      input.addEventListener('change', updateStateFromInput);
+
+      // Init state
+      updateStateFromInput();
+    })();
+</script>
+</body>
+
+</html>
