@@ -37,7 +37,7 @@ public class HomeControllerIntegrationTest {
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("message", containsString("Welcome to Weather App")))
+                .andExpect(model().attribute("message", containsString("Добро пожаловать в Weather App")))
                 .andExpect(model().attribute("message", containsString(today)));
     }
 }

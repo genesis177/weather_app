@@ -32,7 +32,7 @@ public class AiSummaryService {
 
     public String summarize(WeatherReport report, String timezone, String city) {
         if (!isConfigured()) {
-            return "AI summary unavailable: missing Google Gemini API key.";
+            return "AI-сводка недоступна: отсутствует ключ API Google Gemini.";
         }
         final var model = getModel();
         String reportJson;
@@ -42,13 +42,13 @@ public class AiSummaryService {
             reportJson = safeReport(report);
         }
 
-        final var location = city != null && !city.isBlank() ? city : "the provided coordinates";
+        final var location = city != null && !city.isBlank() ? city : "предоставленные координаты";
         final var prompt = getPrompt(timezone, location, reportJson);
 
         try {
             return model.generate(prompt);
         } catch (RuntimeException ex) {
-            return "AI summary unavailable at the moment. Reason: " + ex.getMessage();
+            return "AI-сводка недоступна в данный момент. Причина: " + ex.getMessage();
         }
     }
 

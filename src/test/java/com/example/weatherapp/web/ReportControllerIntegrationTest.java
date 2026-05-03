@@ -63,6 +63,6 @@ public class ReportControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("report"))
                 .andExpect(model().attributeExists("error"))
-                .andExpect(model().attribute("error", "Invalid coordinates."));
+                .andExpect(model().attribute("error", "Неверные координаты."));
     }
 }

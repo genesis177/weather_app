@@ -72,7 +72,7 @@ public class AiSummaryControllerIntegrationTest {
                 hourly
         );
 
-        String expectedSummary = "Expect mild temperatures around 20-21°C with no precipitation.";
+        String expectedSummary = "Ожидаются умеренные температуры около 20-21°C без осадков.";
         when(aiSummaryService.summarize(any(WeatherReport.class), anyString(), anyString()))
                 .thenReturn(expectedSummary);
 

@@ -43,7 +43,7 @@ public class AiSummaryServiceIntegrationTest {
             WeatherReport report = createSampleWeatherReport();
             String summary = aiSummaryService.summarize(report, "UTC", "Test City");
 
-            assertThat(summary).isEqualTo("AI summary unavailable: missing Google Gemini API key.");
+            assertThat(summary).isEqualTo("AI-сводка недоступна: отсутствует ключ API Google Gemini.");
         } finally {
             ReflectionTestUtils.setField(aiSummaryService, "apiKey", originalApiKey);
         }

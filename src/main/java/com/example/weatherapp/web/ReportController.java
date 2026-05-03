@@ -17,7 +17,7 @@ public class ReportController {
                          @RequestParam(value = "city", required = false) String city,
                          Model model) {
         if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-            model.addAttribute("error", "Invalid coordinates.");
+            model.addAttribute("error", "Неверные координаты.");
             return "report";
         }
 
